@@ -22,18 +22,18 @@ SOURCES += \
     src/controller.cpp \
     src/main.cpp \
     src/mainwindow.cpp \
-    src/midicontroller.cpp \
-    external/rt_midi/include/RtMidi.cpp
+    external/rt_midi/include/RtMidi.cpp \
+    src/midihandler.cpp
 
 HEADERS += \
     src/audioengine.h \
     src/controller.h \
     src/mainwindow.h \
-    src/midicontroller.h \
     external/rt_midi/include/RtMidi.h \
     external/sfizz/include/sfizz.h \
     external/sfizz/include/sfizz.hpp \
     external/sfizz/include/sfizz_message.h \
+    src/midihandler.h
 
 FORMS += \
     src/ui/mainwindow.ui

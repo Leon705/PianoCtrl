@@ -7,16 +7,11 @@ MainWindow::MainWindow(QWidget *parent)
     , __controller()
 {
     ui->setupUi(this);
+    __controller.initialize();
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
-}
-
-void MainWindow::on_horizontalSlider_valueChanged(int value)
-{
-    MidiController& midiController = this->__controller.getMidiController();
-    midiController.sendCC(7, value);
 }
 

@@ -3,10 +3,7 @@
 #include <qdebug.h>
 
 Controller::Controller()
-    :midiController_()
-{
-    initialize();
-}
+{}
 
 void Controller::initialize() {
     this->synth_.reset(sfizz_create_synth());
@@ -25,12 +22,11 @@ void Controller::initialize() {
     bool ok = sfizz_load_file(this->synth_.get(), "/home/leon/Dokumente/sfz_samplelibs/kamoepiano301/kamoepiano301.sfz");
     qDebug() << "loaded?: " << ok;
     sfizz_send_note_on(this->synth_.get(), 0, 65, 100);
-}
 
-
-MidiController& Controller::getMidiController()
-{
-    return this->midiController_;
+    this->midiHandler_ = std::make_unique<MidiHandler>();
+    this->midiHandler_->initialize();
+    this->midiHandler_->setSynth(this->synth_.get());
+    this->midiHandler_->openPort(2);
 }
 
 sfizz_synth_t *Controller::getSynth() const
@@ -42,6 +38,6 @@ void Controller::SfizzSynthDeleter::operator()(sfizz_synth_t *synth) const
 {
     if (synth)
     {
-         sfizz_free(synth);
+        sfizz_free(synth);
     }
 }
