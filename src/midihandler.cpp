@@ -1,5 +1,7 @@
 #include "midihandler.h"
 
+#include <qdebug.h>
+
 MidiHandler::MidiHandler() {}
 
 MidiHandler::~MidiHandler()
@@ -46,8 +48,8 @@ void MidiHandler::midiCallback(double timeStamp, std::vector<unsigned char> *mes
     const std::vector<unsigned char>& msg = *message;
     if (msg.size() < 3) return;
 
-
     // https://www.songstuff.com/recording/article/midi-message-format/
+    // https://midi.org/midi-1-0-control-change-messages
     uint8_t status = msg[0];
     uint8_t command = status & 0xF0;
     // uint8_t channel = status & 0x0F;
@@ -63,7 +65,21 @@ void MidiHandler::midiCallback(double timeStamp, std::vector<unsigned char> *mes
             sfizz_send_note_on(self->synth_, 0, data1, data2);
             break;
 
+        case 0xB0:
+            sfizz_send_cc(self->synth_, 0, data1, data2);
+            break;
+
+        case 0xE0:
+            self->handlePitchBend(data1, data2);
+            break;
+
         default:
             break;
     }
+}
+
+void MidiHandler::handlePitchBend(uint8_t data1, uint8_t data2)
+{
+    uint16_t pitch = (data2 << 7) | data1;   // 14b value - 13b max value -> centered at 0
+    sfizz_send_pitch_wheel(this->synth_, 0, pitch - 8192);  // subtract here to prevent uint underflow
 }
