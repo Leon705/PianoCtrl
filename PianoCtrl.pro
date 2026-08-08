@@ -20,6 +20,9 @@ LIBS += -lasound -L$$PWD/external/sfizz/lib -lsfizz -ljack
 SOURCES += \
     src/audioengine.cpp \
     src/controller.cpp \
+    src/data/appstate.cpp \
+    src/data/filemanager.cpp \
+    src/data/iserializable.cpp \
     src/main.cpp \
     src/mainwindow.cpp \
     external/rt_midi/include/RtMidi.cpp \
@@ -29,6 +32,9 @@ HEADERS += \
     src/coreerror.h \
     src/audioengine.h \
     src/controller.h \
+    src/data/appstate.h \
+    src/data/filemanager.h \
+    src/data/iserializable.h \
     src/mainwindow.h \
     external/rt_midi/include/RtMidi.h \
     external/sfizz/include/sfizz.h \
