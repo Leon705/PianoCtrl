@@ -19,6 +19,6 @@ public:
 
 private:
     Ui::MainWindow *ui;
-    Controller __controller;
+    Controller controller_;
 };
 #endif // MAINWINDOW_H

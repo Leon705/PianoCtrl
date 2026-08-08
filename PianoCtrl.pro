@@ -3,7 +3,7 @@ QMAKE_LFLAGS += -Wl,-rpath,'$$PWD/external/sfizz/lib'
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-CONFIG += c++11
+CONFIG += c++23
 DEFINES += __LINUX_ALSA__
 
 INCLUDEPATH += $$PWD/external/sfizz/include \
@@ -26,6 +26,7 @@ SOURCES += \
     src/midihandler.cpp
 
 HEADERS += \
+    coreerror.h \
     src/audioengine.h \
     src/controller.h \
     src/mainwindow.h \

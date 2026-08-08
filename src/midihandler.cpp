@@ -7,12 +7,23 @@ MidiHandler::MidiHandler() {}
 MidiHandler::~MidiHandler()
 { }
 
-void MidiHandler::initialize()
+std::expected<void, MidiHandler::Error> MidiHandler::initialize()
 {
-    try {
-        this->midiIn_ = std::make_unique<RtMidiIn>();
-    } catch (RtMidiError error) {
-        error.printMessage();
+    try
+    {
+        this->midiIn_ = std::make_unique<RtMidiIn>();        
+        return {};
+    }
+    catch (const RtMidiError &error)
+    {
+        return std::unexpected(MidiHandler::Error{
+            MidiHandler::ErrorCode::ErrorMidiInitFailed,
+            QString::fromStdString(error.getMessage())
+        });
+    }
+    catch (const std::bad_alloc&)
+    {
+        return std::unexpected(MidiHandler::ErrorCode::ErrorOutOfMemory);
     }
 }
 
@@ -38,6 +49,27 @@ bool MidiHandler::openPort(uint32_t port)
 void MidiHandler::setSynth(sfizz_synth_t* synth)
 {
     this->synth_ = synth;
+}
+
+QString MidiHandler::errorToQString(const Error &error) noexcept
+{
+    QString baseMessage;
+    switch (error.code)
+    {
+        case MidiHandler::ErrorCode::ErrorMidiInitFailed:
+            baseMessage = QStringLiteral("Unable to initialize midi-in");
+            break;
+
+        case MidiHandler::ErrorCode::ErrorOutOfMemory:
+            baseMessage = QStringLiteral("MidiHandler ran out of memory");
+            break;
+    }
+
+    if (error.message.isEmpty()) {
+        return baseMessage;
+    }
+
+    return baseMessage + QLatin1StringView(" (") + error.message + QLatin1StringView(")");
 }
 
 void MidiHandler::midiCallback(double timeStamp, std::vector<unsigned char> *message, void *userData)

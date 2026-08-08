@@ -4,10 +4,13 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , __controller()
+    , controller_()
 {
     ui->setupUi(this);
-    __controller.initialize();
+    if (std::expected<void, Controller::SystemError> res = controller_.initialize(); !res) {
+        std::cerr << Controller::errorToQString(res.error()).toStdString() << std::endl;
+        exit(1);
+    }
 }
 
 MainWindow::~MainWindow()

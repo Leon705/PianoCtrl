@@ -1,20 +1,32 @@
 #ifndef MIDIHANDLER_H
 #define MIDIHANDLER_H
 
+#include <QString>
 #include <RtMidi.h>
+#include <expected>
 #include <memory>
 #include <sfizz.h>
+#include "coreerror.h"
 
 class MidiHandler
 {
 public:
+    enum class ErrorCode: uint8_t
+    {
+        ErrorMidiInitFailed,
+        ErrorOutOfMemory,
+    };
+    using Error = ::Error<ErrorCode>;
+
     MidiHandler();
     ~MidiHandler();
 
-    void initialize();
+    std::expected<void, MidiHandler::Error> initialize();
 
     bool openPort(uint32_t port);
     void setSynth(sfizz_synth_t* synth);
+
+    static QString errorToQString(const MidiHandler::Error &error) noexcept;
 
 private:
     static void midiCallback(double timeStamp, std::vector<unsigned char> *message, void *userData);

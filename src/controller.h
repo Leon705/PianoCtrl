@@ -5,14 +5,26 @@
 #include <sfizz.h>
 #include "audioengine.h"
 #include "midihandler.h"
+#include "coreerror.h"
 
 class Controller
 {
 public:
+    enum class ErrorCode: uint8_t {
+        ErrorCreateSynth,
+        ErrorLoadSampleLibrary,
+    };
+    using Error = ::Error<ErrorCode>;
+    using SystemError = std::variant<Controller::Error, AudioEngine::Error, MidiHandler::Error>;
+
     Controller();
 
-    void initialize();
+    std::expected<void, Controller::SystemError> initialize();
+    std::expected<void, Controller::SystemError> loadSampleLibrary(const QString &path);
+
     sfizz_synth_t* getSynth() const;
+
+    static QString errorToQString(const Controller::SystemError &error) noexcept;
 
 private:
     struct SfizzSynthDeleter {
