@@ -8,7 +8,7 @@ std::expected<void, FileManager::Error> FileManager::saveToFile(const ISerializa
     QSaveFile file(path);
     if (!file.open(QIODevice::WriteOnly))
     {
-        return std::unexpected(FileManager::Error{
+        return std::unexpected(FileManager::FileError{
             FileManager::ErrorCode::ErrorWriteFailed,
             path
         });
@@ -19,7 +19,7 @@ std::expected<void, FileManager::Error> FileManager::saveToFile(const ISerializa
 
     if (!file.commit())
     {
-        return std::unexpected(FileManager::Error{
+        return std::unexpected(FileManager::FileError{
             FileManager::ErrorCode::ErrorWriteFailed,
             path
         });
@@ -32,72 +32,60 @@ std::expected<void, FileManager::Error> FileManager::loadFromFile(ISerializable 
 {
     QFile file(path);
     if (!file.exists()) {
-        return std::unexpected(FileManager::Error{
+        return std::unexpected(FileManager::FileError{
             FileManager::ErrorCode::ErrorFileNotFound,
             path
         });
     }
 
     if (!file.open(QIODevice::ReadOnly)) {
-        return std::unexpected(FileManager::Error{
+        return std::unexpected(FileManager::FileError{
             FileManager::ErrorCode::ErrorReadFailed,
             path
         });
     }
 
-    QJsonParseError parseError;
-    const QJsonDocument doc = QJsonDocument::fromJson(file.readAll(), &parseError);
-
-    if (parseError.error != QJsonParseError::NoError) {
-        return std::unexpected(FileManager::Error{
-            FileManager::ErrorCode::ErrorBadJson,
-            parseError.errorString()
-        });
-    }
-
-    if (auto success = model.fromJson(doc.object()); !success) {
-        return std::unexpected(FileManager::Error{
-            FileManager::ErrorCode::ErrorDeserializingFailed,
-            std::move(success.error().message)
-        });
-    }
-
-    return {};
+    return model.fromJson(file.readAll());
 }
 
 QString FileManager::errorToQString(const FileManager::Error &error) noexcept
 {
     QString baseMessage;
-    switch (error.code)
+
+    if (std::holds_alternative<FileManager::FileError>(error))
     {
-    case FileManager::ErrorCode::ErrorFileNotFound:
-        baseMessage = QStringLiteral("File does not exist");
-        break;
+        auto fileError = std::get<FileManager::FileError>(error);
 
-    case FileManager::ErrorCode::ErrorReadFailed:
-        baseMessage = QStringLiteral("Unable to read file");
-        break;
+        switch (fileError.code)
+        {
+        case FileManager::ErrorCode::ErrorFileNotFound:
+            baseMessage = QStringLiteral("File does not exist");
+            break;
 
-    case FileManager::ErrorCode::ErrorWriteFailed:
-        baseMessage = QStringLiteral("Unable to write file");
-        break;
+        case FileManager::ErrorCode::ErrorReadFailed:
+            baseMessage = QStringLiteral("Unable to read file");
+            break;
 
-    case FileManager::ErrorCode::ErrorBadJson:
-        return error.message;
+        case FileManager::ErrorCode::ErrorWriteFailed:
+            baseMessage = QStringLiteral("Unable to write file");
+            break;
 
-    case FileManager::ErrorCode::ErrorDeserializingFailed:
-        baseMessage = error.message;
-        break;
+        case FileManager::ErrorCode::ErrorPermissionDenied:
+            baseMessage = QStringLiteral("Permission denied");
+            break;
+        }
 
-    case FileManager::ErrorCode::ErrorPermissionDenied:
-        baseMessage = QStringLiteral("Permission denied");
-        break;
+        if (fileError.message.isEmpty())
+        {
+            return baseMessage;
+        }
+
+        return baseMessage + QLatin1StringView(" (") + fileError.message + QLatin1StringView(")");
+    }
+    else if (std::holds_alternative<ISerializable::Error>(error))
+    {
+        return ISerializable::errorToQString(std::get<ISerializable::Error>(error));
     }
 
-    if (error.message.isEmpty())
-    {
-        return baseMessage;
-    }
-
-    return baseMessage + QLatin1StringView(" (") + error.message + QLatin1StringView(")");
+    return QString();
 }

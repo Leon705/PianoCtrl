@@ -12,11 +12,10 @@ public:
         ErrorFileNotFound,
         ErrorReadFailed,
         ErrorWriteFailed,
-        ErrorBadJson,
-        ErrorDeserializingFailed,
         ErrorPermissionDenied,
     };
-    using Error = ::Error<FileManager::ErrorCode>;
+    using FileError = ::Error<FileManager::ErrorCode>;
+    using Error = std::variant<FileManager::FileError, ISerializable::Error>;
 
     static std::expected<void, FileManager::Error> saveToFile(const ISerializable &model, const QString &path);
     static std::expected<void, FileManager::Error> loadFromFile(ISerializable &model, const QString &path);

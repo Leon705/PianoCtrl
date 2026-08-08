@@ -42,9 +42,21 @@ QJsonObject AppState::toJson() const
     return json;
 }
 
-std::expected<void, ISerializable::Error> AppState::fromJson(const QJsonObject &json)
+std::expected<void, ISerializable::Error> AppState::fromJson(const QByteArray &json)
 {
-    if (!json.contains(AppState::KeyLastSampleLibraryPath))
+    QJsonParseError parseError;
+    const QJsonDocument doc = QJsonDocument::fromJson(json, &parseError);
+
+    if (parseError.error != QJsonParseError::NoError) {
+        return std::unexpected(ISerializable::Error{
+            ISerializable::ErrorCode::ErrorInvalidFormat,
+            parseError.errorString()
+        });
+    }
+
+    const QJsonObject& jsonObject = doc.object();
+
+    if (!jsonObject.contains(AppState::KeyLastSampleLibraryPath))
     {
         return std::unexpected(ISerializable::Error{
             ISerializable::ErrorCode::ErrorInvalidFormat,
@@ -52,9 +64,10 @@ std::expected<void, ISerializable::Error> AppState::fromJson(const QJsonObject &
         });
     }
 
-    this->lastSampleLibraryPath = json[AppState::KeyLastSampleLibraryPath].toString();
-    this->masterVolume = static_cast<float>(json[AppState::KeyMasterVolume].toDouble(1.0));
-    this->selectedMidiChannel = json[AppState::KeySelectedMidiChannel].toInt(1);
+
+    this->lastSampleLibraryPath = jsonObject[AppState::KeyLastSampleLibraryPath].toString();
+    this->masterVolume = static_cast<float>(jsonObject[AppState::KeyMasterVolume].toDouble(0.75));
+    this->selectedMidiChannel = jsonObject[AppState::KeySelectedMidiChannel].toInt(1);
 
     return {};
 }

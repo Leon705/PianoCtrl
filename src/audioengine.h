@@ -23,19 +23,24 @@ public:
     void stop();
 
     uint32_t getSampleRate() const;
+
     uint32_t getBufferSize() const;
 
     static QString errorToQString(const AudioEngine::Error& error) noexcept;
 
+    float getVolume() const;
+    void setVolume(float volume);
+
 private:
     static int processCallback(jack_nframes_t nframes, void* arg); // static Jack callback matching the C API
 
-    int process(jack_nframes_t nframes);
+    int process(jack_nframes_t nframes);    
 
     sfizz_synth_t* synth_;
     jack_client_t* client_;
     jack_port_t* outputPortLeft_;
     jack_port_t* outputPortRight_;
+    float masterVolume_;
 };
 
 #endif // AUDIOENGINE_H

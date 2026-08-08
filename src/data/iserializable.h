@@ -15,7 +15,7 @@ public:
     virtual ~ISerializable() = default;
 
     virtual QJsonObject toJson() const = 0;
-    virtual std::expected<void, ISerializable::Error> fromJson(const QJsonObject &json) = 0;
+    virtual std::expected<void, ISerializable::Error> fromJson(const QByteArray &json) = 0;
 
     static QString errorToQString(const ISerializable::Error& error) noexcept;
 };

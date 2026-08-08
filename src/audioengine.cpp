@@ -103,3 +103,21 @@ int AudioEngine::process(jack_nframes_t nframes)
 
     return 0;
 }
+
+float AudioEngine::getVolume() const
+{
+    return masterVolume_;
+}
+
+void AudioEngine::setVolume(float volume)     // TODO: change to std::expected<void, Error>
+{
+    this->masterVolume_ = std::clamp(volume, 0.0f, 1.0f);
+
+    if (this->synth_) {
+        const float volumeDb = (this->masterVolume_ > 0.0001f)
+                                   ? 20.0f * std::log10(this->masterVolume_)
+                                   : -80.0f;
+
+        sfizz_set_volume(this->synth_, volumeDb);
+    }
+}
