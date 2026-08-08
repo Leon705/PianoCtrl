@@ -5,7 +5,7 @@
 #include <sfizz.h>
 #include <QString>
 #include <expected>
-#include <coreerror.h>
+#include "coreerror.h"
 
 class AudioEngine
 {

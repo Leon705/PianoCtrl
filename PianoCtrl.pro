@@ -26,7 +26,7 @@ SOURCES += \
     src/midihandler.cpp
 
 HEADERS += \
-    coreerror.h \
+    src/coreerror.h \
     src/audioengine.h \
     src/controller.h \
     src/mainwindow.h \
