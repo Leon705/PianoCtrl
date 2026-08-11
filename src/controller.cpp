@@ -1,6 +1,7 @@
 #include "controller.h"
 #include "src/data/appstate.h"
 #include "src/data/filemanager.h"
+#include "src/data/filepaths.h"
 
 #include <qdebug.h>
 
@@ -71,6 +72,11 @@ std::expected<void, Controller::SystemError> Controller::loadSampleLibrary(const
     return {};
 }
 
+std::expected<void, Controller::SystemError> Controller::saveAppState()
+{
+    return FileManager::saveToFile(this->appState_, FilePaths::appStateFilePath());
+}
+
 sfizz_synth_t *Controller::getSynth() const
 {
     return this->synth_.get();
@@ -133,8 +139,9 @@ QString Controller::errorToQString(const Controller::SystemError &error) noexcep
 
 void Controller::persistAppState()
 {
-    if (auto success = FileManager::saveToFile(this->appState_, "/home/leon/Dokumente/piano_ctrl/PianoCtrl/build/appstate.json"); !success) {
-        std::cerr << Controller::errorToQString(success.error()).toStdString() << std::endl;
+    if (auto res = this->saveAppState(); !res)
+    {
+        std::cerr << Controller::errorToQString(res.error()).toStdString() << std::endl;
     }
 }
 

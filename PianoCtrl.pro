@@ -22,6 +22,7 @@ SOURCES += \
     src/controller.cpp \
     src/data/appstate.cpp \
     src/data/filemanager.cpp \
+    src/data/filepaths.cpp \
     src/data/iserializable.cpp \
     src/main.cpp \
     src/mainwindow.cpp \
@@ -34,6 +35,7 @@ HEADERS += \
     src/controller.h \
     src/data/appstate.h \
     src/data/filemanager.h \
+    src/data/filepaths.h \
     src/data/iserializable.h \
     src/mainwindow.h \
     external/rt_midi/include/RtMidi.h \

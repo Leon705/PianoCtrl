@@ -26,6 +26,7 @@ public:
 
     std::expected<void, Controller::SystemError> initialize();
     std::expected<void, Controller::SystemError> loadSampleLibrary(const QString &path);
+    std::expected<void, Controller::SystemError> saveAppState();
 
     sfizz_synth_t* getSynth() const;
 
