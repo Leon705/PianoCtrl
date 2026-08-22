@@ -13,7 +13,7 @@ Window {
 
     Rectangle {
             anchors.fill: parent
-            color: "#0a0a0c" // Dunkler Basiston
+            color: "#0a0a0c"
     }
 
     Image {
