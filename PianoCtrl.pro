@@ -1,4 +1,5 @@
-QT       += core gui
+QT       += core gui \
+    qml
 QMAKE_LFLAGS += -Wl,-rpath,'$$PWD/external/sfizz/lib'
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -25,7 +26,6 @@ SOURCES += \
     src/data/filepaths.cpp \
     src/data/iserializable.cpp \
     src/main.cpp \
-    src/mainwindow.cpp \
     external/rt_midi/include/RtMidi.cpp \
     src/midihandler.cpp
 
@@ -37,17 +37,22 @@ HEADERS += \
     src/data/filemanager.h \
     src/data/filepaths.h \
     src/data/iserializable.h \
-    src/mainwindow.h \
     external/rt_midi/include/RtMidi.h \
     external/sfizz/include/sfizz.h \
     external/sfizz/include/sfizz.hpp \
     external/sfizz/include/sfizz_message.h \
     src/midihandler.h
 
-FORMS += \
-    src/ui/mainwindow.ui
+#FORMS += \
+#    src/ui/mainwindow.ui
+
+RESOURCES += \
+    resources.qrc
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+DISTFILES += \
+    src/ui/mainui.qml

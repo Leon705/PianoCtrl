@@ -33,6 +33,11 @@ bool MidiHandler::openPort(uint32_t port)
 
     uint32_t portCount = this->midiIn_->getPortCount();
 
+    if (this->midiIn_->isPortOpen())
+    {
+        this->midiIn_->closePort();
+    }
+
     std::cout << "available ports" << std::endl;
     for (uint32_t currentPort = 0; currentPort  < portCount; currentPort ++)
     {

@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/">
+        <file>src/ui/mainui.qml</file>
+        <file>assets/bg-radial-bloom.svg</file>
+        <file>assets/ambient-glow-warm.svg</file>
+        <file>assets/floor-reflection.svg</file>
+        <file>assets/btn_left.svg</file>
+        <file>assets/btn_right.svg</file>
+        <file>assets/vignette-bottom.svg</file>
+    </qresource>
+</RCC>

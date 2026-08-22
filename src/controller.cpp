@@ -27,27 +27,27 @@ std::expected<void, Controller::SystemError> Controller::initialize() {
     }
 
     this->audioEngine_ = std::make_unique<AudioEngine>(this->synth_.get());
-    if (auto success = this->audioEngine_->start(); !success)
+    if (auto res = this->audioEngine_->start(); !res)
     {
-        return std::unexpected(std::move(success.error()));
+        return std::unexpected(std::move(res.error()));
     }
 
     sfizz_set_sample_rate(this->synth_.get(), this->audioEngine_->getSampleRate());
     sfizz_set_samples_per_block(this->synth_.get(), this->audioEngine_->getBufferSize());
 
 
-    if (auto success = this->loadSampleLibrary(QStringLiteral("/home/leon/Dokumente/sfz_samplelibs/kamoepiano301/kamoepiano301.sfz")); !success)
+/*    if (auto success = this->loadSampleLibrary(QStringLiteral("/home/leon/Dokumente/sfz_samplelibs/kamoepiano301/kamoepiano301.sfz")); !success)
     {
         return std::unexpected(std::move(success.error()));
     }
-
-    sfizz_send_note_on(this->synth_.get(), 0, 65, 100);
-
+*/
     this->midiHandler_ = std::make_unique<MidiHandler>();
-    this->midiHandler_->initialize();
-    this->midiHandler_->setSynth(this->synth_.get());
-    this->midiHandler_->openPort(2);
+    if (auto res = this->midiHandler_->initialize(); !res)
+    {
+        return std::unexpected(std::move(res.error()));
+    }
 
+    this->midiHandler_->setSynth(this->synth_.get());
     return {};
 }
 
@@ -69,6 +69,26 @@ std::expected<void, Controller::SystemError> Controller::loadSampleLibrary(const
 
     this->appState_.setLastSampleLibraryPath(path);
     this->saveTimer_.start();
+    return {};
+}
+
+std::expected<void, Controller::SystemError> Controller::switchMidiPort(uint32_t port)
+{
+    if (!this->midiHandler_)
+    {
+        return std::unexpected(Controller::ErrorCode::ErrorUnexpected);
+    }
+
+    if (!this->midiHandler_->openPort(port))
+    {
+        return std::unexpected(Controller::Error{
+            Controller::ErrorCode::ErrorOpenMidiPort,
+            QString::number(port)
+        });
+    }
+
+    // TODO: save port in appState
+
     return {};
 }
 
@@ -108,6 +128,10 @@ QString Controller::errorToQString(const Controller::SystemError &error) noexcep
 
             case Controller::ErrorCode::ErrorLoadSampleLibrary:
                 baseMessage = QStringLiteral("Unable to load sample library");
+                break;
+
+            case Controller::ErrorCode::ErrorOpenMidiPort:
+                baseMessage = QStringLiteral("Failed to open midi-port");
                 break;
 
             case Controller::ErrorCode::ErrorUnexpected:

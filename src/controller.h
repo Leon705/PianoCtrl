@@ -17,6 +17,7 @@ public:
     enum class ErrorCode: uint8_t {
         ErrorCreateSynth,
         ErrorLoadSampleLibrary,
+        ErrorOpenMidiPort,
         ErrorUnexpected,
     };
     using Error = ::Error<ErrorCode>;
@@ -26,6 +27,7 @@ public:
 
     std::expected<void, Controller::SystemError> initialize();
     std::expected<void, Controller::SystemError> loadSampleLibrary(const QString &path);
+    std::expected<void, Controller::SystemError> switchMidiPort(uint32_t port);
     std::expected<void, Controller::SystemError> saveAppState();
 
     sfizz_synth_t* getSynth() const;
