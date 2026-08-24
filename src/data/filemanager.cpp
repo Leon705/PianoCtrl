@@ -48,6 +48,28 @@ std::expected<void, FileManager::Error> FileManager::loadFromFile(ISerializable 
     return model.fromJson(file.readAll());
 }
 
+std::expected<QString, FileManager::Error> FileManager::readTextFile(const QString &path)
+{
+    QFile file(path);
+    if (!file.exists())
+    {
+        return std::unexpected(FileManager::FileError{
+            FileManager::ErrorCode::ErrorFileNotFound,
+            path
+        });
+    }
+
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        return std::unexpected(FileManager::FileError{
+            FileManager::ErrorCode::ErrorReadFailed,
+            path
+        });
+    }
+
+    return QString::fromUtf8(file.readAll());
+}
+
 QString FileManager::errorToQString(const FileManager::Error &error) noexcept
 {
     QString baseMessage;

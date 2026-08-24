@@ -19,6 +19,7 @@ public:
 
     static std::expected<void, FileManager::Error> saveToFile(const ISerializable &model, const QString &path);
     static std::expected<void, FileManager::Error> loadFromFile(ISerializable &model, const QString &path);
+    static std::expected<QString, FileManager::Error> readTextFile(const QString &path);
 
     static QString errorToQString(const FileManager::Error& error) noexcept;
 };

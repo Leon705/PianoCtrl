@@ -1,5 +1,6 @@
 QT       += core gui \
-    qml
+    qml \
+    sql
 QMAKE_LFLAGS += -Wl,-rpath,'$$PWD/external/sfizz/lib'
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -22,9 +23,12 @@ SOURCES += \
     src/audioengine.cpp \
     src/controller.cpp \
     src/data/appstate.cpp \
+    src/data/databasemanager.cpp \
     src/data/filemanager.cpp \
     src/data/filepaths.cpp \
     src/data/iserializable.cpp \
+    src/data/samplelibraryrepository.cpp \
+    src/data/soundlibraryrepository.cpp \
     src/main.cpp \
     external/rt_midi/include/RtMidi.cpp \
     src/midihandler.cpp
@@ -34,6 +38,7 @@ HEADERS += \
     src/audioengine.h \
     src/controller.h \
     src/data/appstate.h \
+    src/data/databasemanager.h \
     src/data/filemanager.h \
     src/data/filepaths.h \
     src/data/iserializable.h \
@@ -41,6 +46,10 @@ HEADERS += \
     external/sfizz/include/sfizz.h \
     external/sfizz/include/sfizz.hpp \
     external/sfizz/include/sfizz_message.h \
+    src/data/samplelibrary.h \
+    src/data/samplelibraryrepository.h \
+    src/data/soundlibrary.h \
+    src/data/soundlibraryrepository.h \
     src/midihandler.h
 
 #FORMS += \

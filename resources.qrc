@@ -7,5 +7,6 @@
         <file>assets/btn_left.svg</file>
         <file>assets/btn_right.svg</file>
         <file>assets/vignette-bottom.svg</file>
+        <file>sql/soundlib_db.sql</file>
     </qresource>
 </RCC>

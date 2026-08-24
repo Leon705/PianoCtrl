@@ -7,6 +7,7 @@ class FilePaths
 {
 public:
     static QString appStateFilePath();
+    static QString soundlibDatabaseFilePath();
     static QString defaultSampleLibraryDirPath();
 };
 

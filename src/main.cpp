@@ -1,10 +1,14 @@
 #include "controller.h"
+#include "src/data/filepaths.h"
 
 #include <QGuiApplication>
 #include <QCommandLineParser>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <iostream>
+
+#include <src/data/databasemanager.h>
+#include <src/data/samplelibraryrepository.h>
 
 const QCommandLineOption sampleLibraryOption(
     QStringList() << QStringLiteral("sample-library") << QStringLiteral("slib"),
@@ -65,6 +69,39 @@ int main(int argc, char *argv[])
                       << parser.value(midiPortOption).toStdString() << std::endl;
         }
     }
+
+
+    DatabaseManager dbmgr(FilePaths::soundlibDatabaseFilePath());
+    if (auto res = dbmgr.initDatabase(QStringLiteral(":/sql/soundlib_db.sql")); !res)
+    {
+        std::cerr << DatabaseManager::errorToQString(res.error()).toStdString() << std::endl;
+    }
+/*
+    SampleLibraryRepository repo(dbmgr);
+
+    SampleLibrary testLib{
+            .displayName = QStringLiteral("kamoe301"),
+            .path = QStringLiteral("/tmp/somewhere/kamoe301.sfz")
+    };
+
+    if (auto res = repo.add(testLib); !res)
+    {
+        std::cerr << DatabaseManager::errorToQString(res.error()).toStdString() << std::endl;
+    }
+
+    auto res = repo.getAll();
+    if (!res)
+    {
+        std::cerr << DatabaseManager::errorToQString(res.error()).toStdString() << std::endl;
+    } else {
+        std::vector<SampleLibrary> libs = res.value();
+        for (const auto &lib : libs)
+        {
+            std::cout << lib.id << " " << lib.displayName.toStdString() << " " << lib.path.toStdString() << std::endl;
+        }
+    }
+*/
+    // TODO remove this section
 
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty(QStringLiteral("controller"), &controller);
