@@ -11,12 +11,16 @@ public:
     explicit SoundLibraryRepository(DatabaseManager &databaseManager);
 
     std::expected<std::vector<SoundLibrary>, DatabaseManager::Error> getAll();
-    std::expected<SoundLibrary, DatabaseManager::Error> getById(int id);
+    std::expected<SoundLibrary, DatabaseManager::Error> getById(const int id);
     std::expected<void, DatabaseManager::Error> add(SoundLibrary &library);
     std::expected<void, DatabaseManager::Error> remove(int id);
 
 private:
     DatabaseManager &databaseManager_;
+
+    static QString getBaseSql();
+    static SoundLibrary mapCurrentRowToSoundLibrary(const QSqlQuery& query);
+    static std::optional<SampleLibrary> extractSampleLibrary(const QSqlQuery& query);
 };
 
 #endif // SOUNDLIBRARYREPOSITORY_H

@@ -74,6 +74,14 @@ QString AudioEngine::errorToQString(const AudioEngine::Error& error) noexcept
             baseMessage = QStringLiteral("Unable activate JACK");
             break;
 
+        case AudioEngine::ErrorCode::ErrorInvalidVolume:
+            baseMessage = QStringLiteral("Invalid value for volume provided");
+            break;
+
+        case AudioEngine::ErrorCode::ErrorSynthNotInitialized:
+            baseMessage = QStringLiteral("Error synth not initialized");
+            break;
+
         default:
             baseMessage = QString();
             break;
@@ -95,6 +103,17 @@ int AudioEngine::process(jack_nframes_t nframes)
 {
     if (!this->synth_) return 0;
 
+    const float targetVolume = this->masterVolume_.load(std::memory_order_relaxed);
+
+    if (targetVolume != this->lastVolumeLinear_)
+    {
+        const float volumeDb = (targetVolume > 0.0001f)
+        ? 20.0f * std::log10(targetVolume)
+        : -80.0f;
+
+        sfizz_set_volume(this->synth_, volumeDb);
+    }
+
     float* outL = static_cast<float*>(jack_port_get_buffer(this->outputPortLeft_, nframes));
     float* outR = static_cast<float*>(jack_port_get_buffer(this->outputPortRight_, nframes));
 
@@ -106,18 +125,21 @@ int AudioEngine::process(jack_nframes_t nframes)
 
 float AudioEngine::getVolume() const
 {
-    return masterVolume_;
+    return this->masterVolume_.load(std::memory_order_relaxed);
 }
 
-void AudioEngine::setVolume(float volume)     // TODO: change to std::expected<void, Error>
+std::expected<void, AudioEngine::Error> AudioEngine::setVolume(float volume)
 {
-    this->masterVolume_ = std::clamp(volume, 0.0f, 1.0f);
-
-    if (this->synth_) {
-        const float volumeDb = (this->masterVolume_ > 0.0001f)
-                                   ? 20.0f * std::log10(this->masterVolume_)
-                                   : -80.0f;
-
-        sfizz_set_volume(this->synth_, volumeDb);
+    if (volume < 0.0f || volume > 1.0f)
+    {
+        return std::unexpected(AudioEngine::ErrorCode::ErrorInvalidVolume);
     }
+
+    if (!this->synth_)
+    {
+        return std::unexpected(AudioEngine::ErrorCode::ErrorSynthNotInitialized);
+    }
+
+    this->masterVolume_.store(volume, std::memory_order_relaxed);
+    return {};
 }

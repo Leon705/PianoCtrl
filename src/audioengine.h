@@ -1,6 +1,7 @@
 #ifndef AUDIOENGINE_H
 #define AUDIOENGINE_H
 
+#include <atomic>
 #include <jack/jack.h>
 #include <sfizz.h>
 #include <QString>
@@ -13,6 +14,8 @@ public:
     enum class ErrorCode: uint8_t {
         ErrorLaunchJack,
         ErrorActivateJack,
+        ErrorInvalidVolume,
+        ErrorSynthNotInitialized,
     };
     using Error = ::Error<ErrorCode>;
 
@@ -29,7 +32,7 @@ public:
     static QString errorToQString(const AudioEngine::Error& error) noexcept;
 
     float getVolume() const;
-    void setVolume(float volume);
+    std::expected<void, AudioEngine::Error> setVolume(float volume);
 
 private:
     static int processCallback(jack_nframes_t nframes, void* arg); // static Jack callback matching the C API
@@ -40,7 +43,8 @@ private:
     jack_client_t* client_;
     jack_port_t* outputPortLeft_;
     jack_port_t* outputPortRight_;
-    float masterVolume_;
+    std::atomic<float> masterVolume_{1.0f};
+    float lastVolumeLinear_{-1.0f};
 };
 
 #endif // AUDIOENGINE_H

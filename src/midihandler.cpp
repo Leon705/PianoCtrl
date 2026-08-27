@@ -66,7 +66,7 @@ QString MidiHandler::errorToQString(const Error &error) noexcept
             break;
 
         case MidiHandler::ErrorCode::ErrorOutOfMemory:
-            baseMessage = QStringLiteral("MidiHandler ran out of memory");
+            baseMessage = QStringLiteral("Midi handler ran out of memory");
             break;
     }
 
@@ -77,7 +77,7 @@ QString MidiHandler::errorToQString(const Error &error) noexcept
     return baseMessage + QLatin1StringView(" (") + error.message + QLatin1StringView(")");
 }
 
-void MidiHandler::midiCallback(double timeStamp, std::vector<unsigned char> *message, void *userData)
+void MidiHandler::midiCallback(double /*timeStamp*/, std::vector<unsigned char> *message, void *userData)
 {
     MidiHandler* self = static_cast<MidiHandler*>(userData);
     if (!self || !self->synth_ || message->empty()) return;
@@ -94,29 +94,35 @@ void MidiHandler::midiCallback(double timeStamp, std::vector<unsigned char> *mes
     uint8_t data2 = msg[2];
 
     switch (command) {
+        case 0x90:
+            if (data2 > 0) {
+                sfizz_send_note_on(self->synth_, 0, data1, data2);
+                break;
+            }
+
+            [[fallthrough]];
+
         case 0x80:
             sfizz_send_note_off(self->synth_, 0, data1, data2);
-            break;
-
-        case 0x90:
-            sfizz_send_note_on(self->synth_, 0, data1, data2);
             break;
 
         case 0xB0:
             sfizz_send_cc(self->synth_, 0, data1, data2);
             break;
 
-        case 0xE0:
-            self->handlePitchBend(data1, data2);
+        case 0xE0: {
+            const int pitch = ((data2 << 7) | data1) - 8192;
+            sfizz_send_pitch_wheel(self->synth_, 0, pitch);
             break;
+        }
 
         default:
             break;
     }
 }
 
-void MidiHandler::handlePitchBend(uint8_t data1, uint8_t data2)
-{
-    uint16_t pitch = (data2 << 7) | data1;   // 14b value - 13b max value -> centered at 0
-    sfizz_send_pitch_wheel(this->synth_, 0, pitch - 8192);  // subtract here to prevent uint underflow
-}
+// void MidiHandler::handlePitchBend(uint8_t data1, uint8_t data2)
+// {
+//     uint16_t pitch = (data2 << 7) | data1;   // 14b value - 13b max value -> centered at 0
+//     sfizz_send_pitch_wheel(this->synth_, 0, pitch - 8192);  // subtract here to prevent uint underflow
+// }

@@ -34,6 +34,7 @@ std::expected<void, Controller::SystemError> Controller::initialize() {
 
     sfizz_set_sample_rate(this->synth_.get(), this->audioEngine_->getSampleRate());
     sfizz_set_samples_per_block(this->synth_.get(), this->audioEngine_->getBufferSize());
+    sfizz_set_num_voices(this->synth_.get(), 64);
 
 
 /*    if (auto success = this->loadSampleLibrary(QStringLiteral("/home/leon/Dokumente/sfz_samplelibs/kamoepiano301/kamoepiano301.sfz")); !success)
