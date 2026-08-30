@@ -22,9 +22,9 @@ std::expected<std::vector<SampleLibrary>, DatabaseManager::Error> SampleLibraryR
     while (query.next())
     {
         result.push_back(SampleLibrary{
-            .id = query.value(QStringLiteral("id")).toInt(),
-            .displayName = query.value(QStringLiteral("display_name")).toString(),
-            .path = query.value(QStringLiteral("path")).toString()
+            .id = query.value(0).toInt(),
+            .displayName = query.value(1).toString(),
+            .path = query.value(2).toString()
         });
     }
 
@@ -54,9 +54,9 @@ std::expected<SampleLibrary, DatabaseManager::Error> SampleLibraryRepository::ge
     }
 
     return SampleLibrary{
-        .id = query.value(QStringLiteral("id")).toInt(),
-        .displayName = query.value(QStringLiteral("display_name")).toString(),
-        .path = query.value(QStringLiteral("path")).toString()
+        .id = query.value(0).toInt(),
+        .displayName = query.value(1).toString(),
+        .path = query.value(2).toString()
     };
 }
 

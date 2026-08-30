@@ -9,6 +9,7 @@
 
 #include <src/data/databasemanager.h>
 #include <src/data/samplelibraryrepository.h>
+#include <src/data/soundlibraryrepository.h>
 
 const QCommandLineOption sampleLibraryOption(
     QStringList() << QStringLiteral("sample-library") << QStringLiteral("slib"),
@@ -75,6 +76,39 @@ int main(int argc, char *argv[])
     if (auto res = dbmgr.initDatabase(QStringLiteral(":/sql/soundlib_db.sql")); !res)
     {
         std::cerr << DatabaseManager::errorToQString(res.error()).toStdString() << std::endl;
+    }
+
+    SampleLibraryRepository sampleRepo(dbmgr);
+    SoundLibraryRepository soundRepo(dbmgr);
+
+    SampleLibrary kamoeLibrary{
+        .displayName = QStringLiteral("kamoe301"),
+        .path = QStringLiteral("/tmp/somewhere/kamoe301.sfz")
+    };
+
+    sampleRepo.add(kamoeLibrary);
+
+    SoundLibrary testSoundLibrary{
+        .id = 0,
+        .displayName = QStringLiteral("TEST SOUND LIBRARY"),
+        .description = QStringLiteral("TEST DATA"),
+        .sampleLibraries = { kamoeLibrary }
+    };
+
+    auto result = soundRepo.add(testSoundLibrary);
+
+    auto res = soundRepo.getAll();
+    if (res)
+    {
+        std::vector<SoundLibrary> libs = res.value();
+        for (const auto &lib : libs)
+        {
+            std::cout << lib.id << " " << lib.displayName.toStdString() << " " << lib.description.toStdString();
+            for (const auto &sampleLib : lib.sampleLibraries)
+            {
+                std::cout << "[" << sampleLib.id << "] " << sampleLib.displayName.toStdString() << " " << sampleLib.path.toStdString() << std::endl;
+            }
+        }
     }
 /*
     SampleLibraryRepository repo(dbmgr);

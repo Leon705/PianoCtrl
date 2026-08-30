@@ -103,19 +103,15 @@ int AudioEngine::process(jack_nframes_t nframes)
 {
     if (!this->synth_) return 0;
 
-    const float targetVolume = this->masterVolume_.load(std::memory_order_relaxed);
-
-    if (targetVolume != this->lastVolumeLinear_)
-    {
-        const float volumeDb = (targetVolume > 0.0001f)
-        ? 20.0f * std::log10(targetVolume)
-        : -80.0f;
-
-        sfizz_set_volume(this->synth_, volumeDb);
-    }
-
     float* outL = static_cast<float*>(jack_port_get_buffer(this->outputPortLeft_, nframes));
     float* outR = static_cast<float*>(jack_port_get_buffer(this->outputPortRight_, nframes));
+
+    if (!outL || !outR)
+    {
+        return 0;
+    }
+
+    this->updateVolume();
 
     float* channels[2] = { outL, outR };
     sfizz_render_block(this->synth_, channels, 2, static_cast<int>(nframes));
@@ -128,18 +124,23 @@ float AudioEngine::getVolume() const
     return this->masterVolume_.load(std::memory_order_relaxed);
 }
 
-std::expected<void, AudioEngine::Error> AudioEngine::setVolume(float volume)
+void AudioEngine::setVolume(float volume)
 {
-    if (volume < 0.0f || volume > 1.0f)
-    {
-        return std::unexpected(AudioEngine::ErrorCode::ErrorInvalidVolume);
-    }
+    const float clamped = std::clamp(volume, 0.0f, 1.0f);
+    this->masterVolume_.store(clamped, std::memory_order_relaxed);
+}
 
-    if (!this->synth_)
-    {
-        return std::unexpected(AudioEngine::ErrorCode::ErrorSynthNotInitialized);
-    }
+void AudioEngine::updateVolume()
+{
+    const float targetVolume = this->masterVolume_.load(std::memory_order_relaxed);
 
-    this->masterVolume_.store(volume, std::memory_order_relaxed);
-    return {};
+    if (targetVolume != this->lastVolumeLinear_)
+    {
+        const float volumeDb = (targetVolume > 0.0001f)
+            ? 20.0f * std::log10(targetVolume)
+            : -80.0f;
+
+        sfizz_set_volume(this->synth_, volumeDb);
+        this->lastVolumeLinear_ = targetVolume;
+    }
 }

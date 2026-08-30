@@ -14,7 +14,7 @@ public:
     enum class ErrorCode: uint8_t {
         ErrorLaunchJack,
         ErrorActivateJack,
-        ErrorInvalidVolume,
+        ErrorInvalidVolume, // @depricated
         ErrorSynthNotInitialized,
     };
     using Error = ::Error<ErrorCode>;
@@ -32,12 +32,13 @@ public:
     static QString errorToQString(const AudioEngine::Error& error) noexcept;
 
     float getVolume() const;
-    std::expected<void, AudioEngine::Error> setVolume(float volume);
+    void setVolume(float volume);
 
 private:
     static int processCallback(jack_nframes_t nframes, void* arg); // static Jack callback matching the C API
 
-    int process(jack_nframes_t nframes);    
+    int process(jack_nframes_t nframes);
+    void updateVolume();
 
     sfizz_synth_t* synth_;
     jack_client_t* client_;
