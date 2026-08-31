@@ -42,6 +42,7 @@ public:
 
     static QString errorToQString(const Controller::SystemError &error) noexcept;
 
+    std::expected<SampleLibrary, Controller::SystemError> currentSampleLibrary();
 private:
     struct SfizzSynthDeleter {
         void operator()(sfizz_synth_t* synth) const;

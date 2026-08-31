@@ -5,11 +5,10 @@
 
 #include <QObject>
 
-
 class UiController : public QObject
 {
     Q_OBJECT
-
+    Q_PROPERTY(QString currentSampleLibraryName READ currentSampleLibraryName NOTIFY currentSampleLibraryNameChanged)
 public:
     enum class ErrorCode: uint8_t {
         ErrorUnexpected,
@@ -20,6 +19,7 @@ public:
     explicit UiController(Controller *controller, QObject *parent = nullptr);
 
     Q_INVOKABLE void switchToAdjacentSampleLibrary(bool previous = false);
+    QString currentSampleLibraryName() const;
 
     static QString errorToQString(const UiController::Error &error) noexcept;
 private:
@@ -32,6 +32,7 @@ private:
 
 signals:
     void errorOccured(const QString &errorMessage);
+    void currentSampleLibraryNameChanged();
 };
 
 #endif // UICONTROLLER_H

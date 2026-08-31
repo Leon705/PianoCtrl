@@ -51,7 +51,7 @@ Window {
         display: AbstractButton.IconOnly
 
         anchors.left: parent.left
-        anchors.leftMargin: 10
+        anchors.leftMargin: 15
         anchors.verticalCenter: parent.verticalCenter
 
         icon.source: "../../assets/btn_left.svg"
@@ -65,6 +65,7 @@ Window {
 
     Button {
         id: btnRight
+        x: 281
         width: 34
         height: 40
 
@@ -77,7 +78,7 @@ Window {
         display: AbstractButton.IconOnly
 
         anchors.right: parent.right
-        anchors.rightMargin: 10
+        anchors.rightMargin: 5
         anchors.verticalCenter: parent.verticalCenter
 
         icon.source: "../../assets/btn_right.svg"
@@ -94,5 +95,61 @@ Window {
         source: "../../assets/vignette-bottom.svg"
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
+    }
+
+    Rectangle {
+        y: 0
+        width: 320
+        height: 54
+        color: "#13ffffff"
+        radius: 2
+        anchors.horizontalCenterOffset: 0
+
+        anchors.horizontalCenter: parent.horizontalCenter
+
+        Button {
+            id: btnMenu
+            width: 24
+            height: 24
+            visible: true
+
+            padding: 0
+            topPadding: 0
+            bottomPadding: 0
+            leftPadding: 0
+            rightPadding: 0
+
+            display: AbstractButton.IconOnly
+
+            anchors.right: parent.right
+            anchors.rightMargin:15
+            anchors.top: parent.top
+            anchors.topMargin: 15
+
+            icon.source: "../../assets/btn_menu.svg"
+            icon.width: width
+            icon.height: height
+            icon.color: "white"
+            background: Rectangle { color: "transparent" }
+        }
+
+        Label {
+            id: labelCurrentSampleLibName
+            width: 232
+            height: 24
+
+            anchors.right: parent.right
+            anchors.rightMargin: 44
+            anchors.top: parent.top
+            anchors.topMargin: 15
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            font.pointSize: 10
+            clip: false
+            font.bold: true
+            font.family: "Arial"
+            color: "white"
+            text: uiController.currentSampleLibraryName
+        }
     }
 }

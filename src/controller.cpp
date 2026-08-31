@@ -78,6 +78,17 @@ std::expected<void, Controller::SystemError> Controller::initialize() {
     return {};
 }
 
+std::expected<SampleLibrary, Controller::SystemError> Controller::currentSampleLibrary()
+{
+    auto res = this->sampleLibraryRepository_->getById(this->appState_.getLastSampleLibraryId());
+    if (!res)
+    {
+        return std::unexpected(res.error());
+    }
+
+    return res.value();
+}
+
 std::expected<void, Controller::SystemError> Controller::loadSoundLibrary(const int id)
 {
     if (auto res = this->soundLibraryRepository_->getById(id); !res)

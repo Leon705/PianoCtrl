@@ -29,7 +29,26 @@ void UiController::switchToAdjacentSampleLibrary(bool previous)
     const size_t newIndex = previous ?(indexResult.value() + samples.size() - 1) % samples.size()
                                 : (indexResult.value() + 1) % samples.size();
 
-    this->controller_->switchSampleLibrary(samples[newIndex].id);
+    auto switchSampleLibraryResult = this->controller_->switchSampleLibrary(samples[newIndex].id);
+    if (!switchSampleLibraryResult)
+    {
+        this->handleError(switchSampleLibraryResult.error());
+        return;
+    }
+
+    emit currentSampleLibraryNameChanged();
+}
+
+QString UiController::currentSampleLibraryName() const
+{
+    auto currentSampleLibraryResult = controller_->currentSampleLibrary();
+    if (!currentSampleLibraryResult)
+    {
+        qCritical() << UiController::errorToQString(currentSampleLibraryResult.error());
+        return QStringLiteral("Unknown");
+    }
+
+    return QString::number(currentSampleLibraryResult.value().id) + QStringLiteral(". ") + currentSampleLibraryResult.value().displayName;
 }
 
 QString UiController::errorToQString(const UiController::Error &error) noexcept

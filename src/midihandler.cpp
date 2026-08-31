@@ -5,7 +5,7 @@
 MidiHandler::MidiHandler() {}
 
 MidiHandler::~MidiHandler()
-{ }
+{ } // TODO: close port
 
 std::expected<void, MidiHandler::Error> MidiHandler::initialize()
 {
@@ -101,7 +101,6 @@ void MidiHandler::midiCallback(double /*timeStamp*/, std::vector<unsigned char> 
             }
 
             [[fallthrough]];
-
         case 0x80:
             sfizz_send_note_off(self->synth_, 0, data1, data2);
             break;
