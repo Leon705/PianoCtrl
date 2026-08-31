@@ -12,8 +12,8 @@ Window {
     maximumHeight: 480
 
     Rectangle {
-            anchors.fill: parent
-            color: "#0a0a0c"
+        anchors.fill: parent
+        color: "#0a0a0c"
     }
 
     Image {
@@ -60,7 +60,7 @@ Window {
         icon.color: "transparent"
 
         background: Rectangle { color: "transparent" }
-        onClicked: console.log("Left clicked")
+        onClicked: uiController.switchToAdjacentSampleLibrary(true);
     }
 
     Button {
@@ -86,7 +86,7 @@ Window {
         icon.color: "transparent"
 
         background: Rectangle { color: "transparent" }
-        onClicked: console.log("Right clicked")
+        onClicked: uiController.switchToAdjacentSampleLibrary();
     }
 
     Image {

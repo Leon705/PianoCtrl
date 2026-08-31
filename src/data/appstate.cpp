@@ -2,14 +2,24 @@
 
 AppState::AppState() {}
 
-QString AppState::getLastSampleLibraryPath() const
+int AppState::getLastSoundLibraryId() const
 {
-    return lastSampleLibraryPath;
+    return this->lastSoundLibraryId;
 }
 
-void AppState::setLastSampleLibraryPath(const QString &newLastSampleLibraryPath)
+void AppState::setLastSoundLibraryId(const int id)
 {
-    lastSampleLibraryPath = newLastSampleLibraryPath;
+    this->lastSoundLibraryId = id;
+}
+
+int AppState::getLastSampleLibraryId() const
+{
+    return this->lastSampleLibraryId;
+}
+
+void AppState::setLastSampleLibraryId(const int id)
+{
+    this->lastSampleLibraryId = id;
 }
 
 float AppState::getMasterVolume() const
@@ -35,7 +45,8 @@ void AppState::setSelectedMidiChannel(int newSelectedMidiChannel)
 QJsonObject AppState::toJson() const
 {
     QJsonObject json;
-    json[AppState::KeyLastSampleLibraryPath]    = this->lastSampleLibraryPath;
+    json[AppState::KeyLastSoundLibraryId]       = this->lastSoundLibraryId;
+    json[AppState::KeyLastSampleLibraryId]      = this->lastSampleLibraryId;
     json[AppState::KeyMasterVolume]             = static_cast<double>(this->masterVolume);
     json[AppState::KeySelectedMidiChannel]      = this->selectedMidiChannel;
 
@@ -56,16 +67,8 @@ std::expected<void, ISerializable::Error> AppState::fromJson(const QByteArray &j
 
     const QJsonObject& jsonObject = doc.object();
 
-    if (!jsonObject.contains(AppState::KeyLastSampleLibraryPath))
-    {
-        return std::unexpected(ISerializable::Error{
-            ISerializable::ErrorCode::ErrorInvalidFormat,
-            QStringLiteral("missing key: ") + AppState::KeyLastSampleLibraryPath
-        });
-    }
-
-
-    this->lastSampleLibraryPath = jsonObject[AppState::KeyLastSampleLibraryPath].toString();
+    this->lastSoundLibraryId = jsonObject[AppState::KeyLastSoundLibraryId].toInt(1);
+    this->lastSampleLibraryId = jsonObject[AppState::KeyLastSampleLibraryId].toInt(1);
     this->masterVolume = static_cast<float>(jsonObject[AppState::KeyMasterVolume].toDouble(0.75));
     this->selectedMidiChannel = jsonObject[AppState::KeySelectedMidiChannel].toInt(1);
 

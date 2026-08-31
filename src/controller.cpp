@@ -14,10 +14,36 @@ Controller::Controller(QObject *parent)
 }
 
 std::expected<void, Controller::SystemError> Controller::initialize() {
-    /*if (auto success = FileManager::loadFromFile(this->appState_, "/home/leon/Dokumente/piano_ctrl/PianoCtrl/build/appstate.json"); !success)
+    if (auto success = FileManager::loadFromFile(this->appState_, FilePaths::appStateFilePath()); !success)
     {
         std::cerr << Controller::errorToQString(success.error()).toStdString() << std::endl;
-    }*/
+    }
+
+    this->soundLibraryDatabaseManager_ = std::make_unique<DatabaseManager>(FilePaths::soundlibDatabaseFilePath());
+    if (auto res = this->soundLibraryDatabaseManager_->initDatabase(QStringLiteral(":/sql/soundlib_db.sql")); !res)
+    {
+        return std::unexpected(res.error());
+    }
+
+    this->sampleLibraryRepository_ = std::make_unique<SampleLibraryRepository>(*this->soundLibraryDatabaseManager_);
+    this->soundLibraryRepository_ = std::make_unique<SoundLibraryRepository>(*this->soundLibraryDatabaseManager_);
+
+   /* SampleLibrary testLib{
+        .displayName = QStringLiteral("kamoe301"),
+        .path = QStringLiteral("/home/leon/Documents/sfz_samplelibs/kamoepiano301/kamoepiano301/kamoepiano301.sfz")
+    };
+
+    sampleLibraryRepository_->add(testLib);
+
+    SoundLibrary soundLib {
+        .displayName = QStringLiteral("TestSoundLib"),
+        .description = QStringLiteral("TEST"),
+        .sampleLibraries = {testLib}
+    };
+
+    soundLibraryRepository_->add(soundLib);
+*/
+
 
     this->synth_.reset(sfizz_create_synth());
 
@@ -29,7 +55,7 @@ std::expected<void, Controller::SystemError> Controller::initialize() {
     this->audioEngine_ = std::make_unique<AudioEngine>(this->synth_.get());
     if (auto res = this->audioEngine_->start(); !res)
     {
-        return std::unexpected(std::move(res.error()));
+        return std::unexpected(res.error());
     }
 
     sfizz_set_sample_rate(this->synth_.get(), this->audioEngine_->getSampleRate());
@@ -52,25 +78,67 @@ std::expected<void, Controller::SystemError> Controller::initialize() {
     return {};
 }
 
-std::expected<void, Controller::SystemError> Controller::loadSampleLibrary(const QString &path)
+std::expected<void, Controller::SystemError> Controller::loadSoundLibrary(const int id)
+{
+    if (auto res = this->soundLibraryRepository_->getById(id); !res)
+    {
+        return std::unexpected(res.error());
+    } else {
+        return this->loadSoundLibrary(res.value());
+    }
+}
+
+std::expected<void, Controller::SystemError> Controller::loadSoundLibrary(const SoundLibrary &soundLibrary)
+{
+    if (soundLibrary.sampleLibraries.empty())
+    {
+        return std::unexpected(Controller::ErrorCode::ErrorUnexpected);
+    }
+
+    const auto &firstSampleLibrary = soundLibrary.sampleLibraries.front();
+
+    this->switchSampleLibrary(firstSampleLibrary.id);
+    this->appState_.setLastSoundLibraryId(soundLibrary.id);
+    this->saveTimer_.start();
+    return {};
+}
+
+std::expected<void, Controller::SystemError> Controller::switchSampleLibrary(const int id)
 {
     if (!this->synth_)
     {
         return std::unexpected(Controller::ErrorCode::ErrorUnexpected);
     }
 
-    const QByteArray pathUtf8 = path.toUtf8();
-    if (!sfizz_load_file(this->synth_.get(), pathUtf8.constData()))
+    auto res = this->sampleLibraryRepository_->getById(id);
+    if (!res || !res.has_value())
+    {
+        return std::unexpected(Controller::ErrorCode::ErrorLoadSampleLibrary);
+    }
+
+    if (!sfizz_load_file(this->synth_.get(), res.value().path.toUtf8().constData()))
     {
         return std::unexpected(Controller::Error{
             Controller::ErrorCode::ErrorLoadSampleLibrary,
-            path
+            res.value().path
         });
     }
 
-    this->appState_.setLastSampleLibraryPath(path);
+    this->appState_.setLastSampleLibraryId(id);
     this->saveTimer_.start();
     return {};
+}
+
+std::expected<std::vector<SampleLibrary>, Controller::SystemError> Controller::getAllSampleLibrariesInSoundLibrary(const int id)
+{
+    auto res = this->soundLibraryRepository_->getById(id);
+
+    if (!res || !res.has_value())
+    {
+        return std::unexpected(res.error());
+    }
+
+    return res.value().sampleLibraries;
 }
 
 std::expected<void, Controller::SystemError> Controller::switchMidiPort(uint32_t port)
@@ -114,6 +182,11 @@ void Controller::setMasterVolume(const float volume)
     this->saveTimer_.start();
 }
 
+AppState Controller::appState() const
+{
+    return this->appState_;
+}
+
 QString Controller::errorToQString(const Controller::SystemError &error) noexcept
 {
     if (std::holds_alternative<Controller::Error>(error))
@@ -154,9 +227,17 @@ QString Controller::errorToQString(const Controller::SystemError &error) noexcep
     {
         return MidiHandler::errorToQString(std::get<MidiHandler::Error>(error));
     }
+    else if (std::holds_alternative<ISerializable::Error>(error))
+    {
+        return ISerializable::errorToQString(std::get<ISerializable::Error>(error));
+    }
     else if (std::holds_alternative<FileManager::Error>(error))
     {
         return FileManager::errorToQString(std::get<FileManager::Error>(error));
+    }
+    else if (std::holds_alternative<DatabaseManager::Error>(error))
+    {
+        return DatabaseManager::errorToQString(std::get<DatabaseManager::Error>(error));
     }
 
     return QString();

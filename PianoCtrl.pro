@@ -31,7 +31,8 @@ SOURCES += \
     src/data/soundlibraryrepository.cpp \
     src/main.cpp \
     external/rt_midi/include/RtMidi.cpp \
-    src/midihandler.cpp
+    src/midihandler.cpp \
+    src/uicontroller.cpp
 
 HEADERS += \
     src/coreerror.h \
@@ -50,7 +51,8 @@ HEADERS += \
     src/data/samplelibraryrepository.h \
     src/data/soundlibrary.h \
     src/data/soundlibraryrepository.h \
-    src/midihandler.h
+    src/midihandler.h \
+    src/uicontroller.h
 
 #FORMS += \
 #    src/ui/mainwindow.ui

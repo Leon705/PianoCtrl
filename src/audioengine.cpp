@@ -126,8 +126,7 @@ float AudioEngine::getVolume() const
 
 void AudioEngine::setVolume(float volume)
 {
-    const float clamped = std::clamp(volume, 0.0f, 1.0f);
-    this->masterVolume_.store(clamped, std::memory_order_relaxed);
+    this->masterVolume_.store(std::clamp(volume, 0.0f, 1.0f), std::memory_order_relaxed);
 }
 
 void AudioEngine::updateVolume()

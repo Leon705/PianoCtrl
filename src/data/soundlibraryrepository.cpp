@@ -47,7 +47,7 @@ std::expected<std::vector<SoundLibrary>, DatabaseManager::Error> SoundLibraryRep
 
 std::expected<SoundLibrary, DatabaseManager::Error> SoundLibraryRepository::getById(const int id)
 {
-    static const QString sql = this->getBaseSql() + QStringLiteral("WHERE s.id = ?");
+    static const QString sql = this->getBaseSql() + QStringLiteral("WHERE sl.id = ?");
 
     QSqlQuery query(this->databaseManager_.database());
     query.prepare(sql);

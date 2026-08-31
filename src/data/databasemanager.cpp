@@ -81,7 +81,6 @@ QString DatabaseManager::errorToQString(const DatabaseManager::Error &error) noe
             case DatabaseManager::ErrorCode::ErrorQueryFailed:
                 baseMessage = QStringLiteral("Query failed");
                 break;
-
         }
 
         if (databaseError.message.isEmpty())
