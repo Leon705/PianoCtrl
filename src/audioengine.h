@@ -7,6 +7,7 @@
 #include <QString>
 #include <expected>
 #include "coreerror.h"
+#include "midihandler.h"
 
 class AudioEngine
 {
@@ -19,21 +20,19 @@ public:
     };
     using Error = ::Error<ErrorCode>;
 
-    AudioEngine(sfizz_synth_t* synth);
+    AudioEngine(sfizz_synth_t* synth, MidiHandler* midiHandler);
     ~AudioEngine();
 
     std::expected<void, AudioEngine::Error> start();
     void stop();
 
     uint32_t getSampleRate() const;
-
     uint32_t getBufferSize() const;
-
-    static QString errorToQString(const AudioEngine::Error& error) noexcept;
 
     float getVolume() const;
     void setVolume(float volume);
 
+    static QString errorToQString(const AudioEngine::Error& error) noexcept;
 private:
     static int processCallback(jack_nframes_t nframes, void* arg); // static Jack callback matching the C API
 
@@ -41,6 +40,7 @@ private:
     void updateVolume();
 
     sfizz_synth_t* synth_;
+    MidiHandler* midiHandler_;
     jack_client_t* client_;
     jack_port_t* outputPortLeft_;
     jack_port_t* outputPortRight_;

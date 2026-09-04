@@ -56,6 +56,11 @@ void MidiHandler::setSynth(sfizz_synth_t* synth)
     this->synth_ = synth;
 }
 
+MidiHandler::MidiQueue &MidiHandler::midiQueue() noexcept
+{
+    return this->midiQueue_;
+}
+
 QString MidiHandler::errorToQString(const Error &error) noexcept
 {
     QString baseMessage;
@@ -87,37 +92,26 @@ void MidiHandler::midiCallback(double /*timeStamp*/, std::vector<unsigned char> 
 
     // https://www.songstuff.com/recording/article/midi-message-format/
     // https://midi.org/midi-1-0-control-change-messages
-    uint8_t status = msg[0];
-    uint8_t command = status & 0xF0;
-    // uint8_t channel = status & 0x0F;
-    uint8_t data1 = msg[1];
-    uint8_t data2 = msg[2];
+    const uint8_t status = msg[0];
+    const uint8_t command = status & 0xF0;
 
-    switch (command) {
-        case 0x90:
-            if (data2 > 0) {
-                sfizz_send_note_on(self->synth_, 0, data1, data2);
-                break;
-            }
+    MidiEvent event;
+    event.channel = status & 0x0F;
+    event.data1 = msg[1];
+    event.data2 = msg[2];
+    event.sampleOffset = 0;
 
-            [[fallthrough]];
-        case 0x80:
-            sfizz_send_note_off(self->synth_, 0, data1, data2);
-            break;
-
-        case 0xB0:
-            sfizz_send_cc(self->synth_, 0, data1, data2);
-            break;
-
-        case 0xE0: {
-            const int pitch = ((data2 << 7) | data1) - 8192;
-            sfizz_send_pitch_wheel(self->synth_, 0, pitch);
-            break;
-        }
-
-        default:
-            break;
+    if (command != static_cast<uint8_t>(MidiEvent::Type::NoteOn) || event.data2 != 0)
+    {
+        event.type = static_cast<MidiEvent::Type>(command);
     }
+    else
+    {
+        event.type = MidiEvent::Type::NoteOff;
+        event.data2 = 64;
+    }
+
+    self->midiQueue_.try_enqueue(event);
 }
 
 // void MidiHandler::handlePitchBend(uint8_t data1, uint8_t data2)

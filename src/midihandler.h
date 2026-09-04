@@ -6,7 +6,9 @@
 #include <expected>
 #include <memory>
 #include <sfizz.h>
+#include <readerwriterqueue.h>
 #include "coreerror.h"
+#include "midievent.h"
 
 class MidiHandler
 {
@@ -17,6 +19,7 @@ public:
         ErrorOutOfMemory,
     };
     using Error = ::Error<ErrorCode>;
+    using MidiQueue = moodycamel::ReaderWriterQueue<MidiEvent>;
 
     MidiHandler();
     ~MidiHandler();
@@ -25,6 +28,8 @@ public:
 
     bool openPort(uint32_t port);
     void setSynth(sfizz_synth_t* synth);
+
+    MidiQueue& midiQueue() noexcept;
 
     static QString errorToQString(const MidiHandler::Error &error) noexcept;
 
@@ -35,6 +40,8 @@ private:
 
     std::unique_ptr<RtMidiIn> midiIn_;
     sfizz_synth_t* synth_;
+
+    MidiQueue midiQueue_{256};;
 };
 
 #endif // MIDIHANDLER_H

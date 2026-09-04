@@ -27,8 +27,8 @@ std::expected<void, Controller::SystemError> Controller::initialize() {
 
     this->sampleLibraryRepository_ = std::make_unique<SampleLibraryRepository>(*this->soundLibraryDatabaseManager_);
     this->soundLibraryRepository_ = std::make_unique<SoundLibraryRepository>(*this->soundLibraryDatabaseManager_);
-
-   /* SampleLibrary testLib{
+/*
+    SampleLibrary testLib{
         .displayName = QStringLiteral("kamoe301"),
         .path = QStringLiteral("/home/leon/Documents/sfz_samplelibs/kamoepiano301/kamoepiano301/kamoepiano301.sfz")
     };
@@ -44,7 +44,6 @@ std::expected<void, Controller::SystemError> Controller::initialize() {
     soundLibraryRepository_->add(soundLib);
 */
 
-
     this->synth_.reset(sfizz_create_synth());
 
     if (!this->synth_)
@@ -52,29 +51,22 @@ std::expected<void, Controller::SystemError> Controller::initialize() {
         return std::unexpected(Controller::ErrorCode::ErrorCreateSynth);
     }
 
-    this->audioEngine_ = std::make_unique<AudioEngine>(this->synth_.get());
-    if (auto res = this->audioEngine_->start(); !res)
-    {
-        return std::unexpected(res.error());
-    }
-
-    sfizz_set_sample_rate(this->synth_.get(), this->audioEngine_->getSampleRate());
-    sfizz_set_samples_per_block(this->synth_.get(), this->audioEngine_->getBufferSize());
-    sfizz_set_num_voices(this->synth_.get(), 64);
-
-
-/*    if (auto success = this->loadSampleLibrary(QStringLiteral("/home/leon/Dokumente/sfz_samplelibs/kamoepiano301/kamoepiano301.sfz")); !success)
-    {
-        return std::unexpected(std::move(success.error()));
-    }
-*/
     this->midiHandler_ = std::make_unique<MidiHandler>();
     if (auto res = this->midiHandler_->initialize(); !res)
     {
         return std::unexpected(std::move(res.error()));
     }
-
     this->midiHandler_->setSynth(this->synth_.get());
+
+    this->audioEngine_ = std::make_unique<AudioEngine>(this->synth_.get(), this->midiHandler_.get());
+    if (auto res = this->audioEngine_->start(); !res)
+    {
+        return std::unexpected(res.error());
+    }
+    sfizz_set_sample_rate(this->synth_.get(), this->audioEngine_->getSampleRate());
+    sfizz_set_samples_per_block(this->synth_.get(), this->audioEngine_->getBufferSize());
+    sfizz_set_num_voices(this->synth_.get(), 64);
+
     return {};
 }
 

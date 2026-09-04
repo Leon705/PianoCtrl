@@ -1,8 +1,8 @@
 #include "audioengine.h"
 #include <iostream>
 
-AudioEngine::AudioEngine(sfizz_synth_t* synth)
-    :synth_(synth)
+AudioEngine::AudioEngine(sfizz_synth_t* synth, MidiHandler* midiHandler)
+    :synth_(synth), midiHandler_(midiHandler)
 { }
 
 AudioEngine::~AudioEngine()
@@ -112,6 +112,35 @@ int AudioEngine::process(jack_nframes_t nframes)
     }
 
     this->updateVolume();
+
+    if (this->midiHandler_)
+    {
+        MidiEvent event;
+        while (this->midiHandler_->midiQueue().try_dequeue(event))
+        {
+            switch (event.type)
+            {
+                case MidiEvent::Type::NoteOn:
+                    sfizz_send_note_on(this->synth_, event.sampleOffset, event.data1, event.data2);
+                    break;
+
+                case MidiEvent::Type::NoteOff:
+                    sfizz_send_note_off(this->synth_, event.sampleOffset, event.data1, event.data2);
+                    break;
+
+                case MidiEvent::Type::ControlChange:
+                    sfizz_send_cc(this->synth_, event.sampleOffset, event.data1, event.data2);
+                    break;
+
+                case MidiEvent::Type::PitchBend:
+                {
+                    const int pitch = ((event.data2 << 7) | event.data1) - 8192;
+                    sfizz_send_pitch_wheel(this->synth_, event.sampleOffset, pitch);
+                    break;
+                }
+            }
+        }
+    }
 
     float* channels[2] = { outL, outR };
     sfizz_render_block(this->synth_, channels, 2, static_cast<int>(nframes));

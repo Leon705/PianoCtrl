@@ -9,7 +9,8 @@ CONFIG += c++23
 DEFINES += __LINUX_ALSA__
 
 INCLUDEPATH += $$PWD/external/sfizz/include \
-    $$PWD/external/rt_midi/include
+    $$PWD/external/rt_midi/include \
+    $$PWD/external/readerwriterqueue/include
 
 LIBS += -lasound -L$$PWD/external/sfizz/lib -lsfizz -ljack
 
@@ -51,6 +52,7 @@ HEADERS += \
     src/data/samplelibraryrepository.h \
     src/data/soundlibrary.h \
     src/data/soundlibraryrepository.h \
+    src/midievent.h \
     src/midihandler.h \
     src/uicontroller.h
 
