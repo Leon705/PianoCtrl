@@ -3,6 +3,7 @@
 
 #include <atomic>
 #include <jack/jack.h>
+#include <jack/midiport.h>
 #include <sfizz.h>
 #include <QString>
 #include <expected>
@@ -41,9 +42,10 @@ private:
 
     sfizz_synth_t* synth_;
     MidiHandler* midiHandler_;
-    jack_client_t* client_;
-    jack_port_t* outputPortLeft_;
-    jack_port_t* outputPortRight_;
+    jack_client_t* client_{nullptr};
+    jack_port_t* outputPortLeft_{nullptr};
+    jack_port_t* outputPortRight_{nullptr};
+    jack_port_t* midiInputPort_{nullptr};
     std::atomic<float> masterVolume_{1.0f};
     float lastVolumeLinear_{-1.0f};
 };

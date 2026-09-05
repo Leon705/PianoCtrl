@@ -64,7 +64,7 @@ std::expected<void, Controller::SystemError> Controller::initialize() {
     }
     sfizz_set_sample_rate(this->synth_.get(), this->audioEngine_->getSampleRate());
     sfizz_set_samples_per_block(this->synth_.get(), this->audioEngine_->getBufferSize());
-    sfizz_set_num_voices(this->synth_.get(), 64);
+    sfizz_set_num_voices(this->synth_.get(), 256);
     sfizz_set_preload_size(this->synth_.get(), 8192);
 
     return {};
@@ -151,7 +151,7 @@ std::expected<void, Controller::SystemError> Controller::switchMidiPort(uint32_t
         return std::unexpected(Controller::ErrorCode::ErrorUnexpected);
     }
 
-    if (!this->midiHandler_->openPort())
+    if (!this->midiHandler_->openPort(port))
     {
         return std::unexpected(Controller::Error{
             Controller::ErrorCode::ErrorOpenMidiPort,
