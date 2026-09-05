@@ -17,6 +17,9 @@ public:
     {
         ErrorMidiInitFailed,
         ErrorOutOfMemory,
+        ErrorFailedToOpenVirtualPort,
+        ErrorUnexpected,
+
     };
     using Error = ::Error<ErrorCode>;
     using MidiQueue = moodycamel::ReaderWriterQueue<MidiEvent>;
@@ -25,9 +28,7 @@ public:
     ~MidiHandler();
 
     std::expected<void, MidiHandler::Error> initialize();
-
-    bool openPort(uint32_t port);
-    void setSynth(sfizz_synth_t* synth);
+    std::expected<void, MidiHandler::Error>  openPort();
 
     MidiQueue& midiQueue() noexcept;
 
@@ -39,9 +40,7 @@ private:
     void handlePitchBend(uint8_t data1, uint8_t data2);
 
     std::unique_ptr<RtMidiIn> midiIn_;
-    sfizz_synth_t* synth_;
-
-    MidiQueue midiQueue_{256};;
+    MidiQueue midiQueue_;
 };
 
 #endif // MIDIHANDLER_H

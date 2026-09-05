@@ -15,7 +15,7 @@ struct MidiEvent {
     uint8_t channel{0};
     uint8_t data1{0};
     uint8_t data2{0};
-    int32_t sampleOffset{0};
+    double deltaTimeSeconds{0};
 };
 
 #endif // MIDIEVENT_H

@@ -2,16 +2,24 @@
 
 #include <qdebug.h>
 
-MidiHandler::MidiHandler() {}
+MidiHandler::MidiHandler() : midiQueue_(1024) {}
 
 MidiHandler::~MidiHandler()
-{ } // TODO: close port
+{
+    if (this->midiIn_)
+    {
+        if (this->midiIn_->isPortOpen())
+        {
+            this->midiIn_->closePort();
+        }
+    }
+}
 
 std::expected<void, MidiHandler::Error> MidiHandler::initialize()
 {
     try
     {
-        this->midiIn_ = std::make_unique<RtMidiIn>();        
+        this->midiIn_ = std::make_unique<RtMidiIn>(RtMidi::UNIX_JACK, "PianoCtrl");
         return {};
     }
     catch (const RtMidiError &error)
@@ -27,33 +35,35 @@ std::expected<void, MidiHandler::Error> MidiHandler::initialize()
     }
 }
 
-bool MidiHandler::openPort(uint32_t port)
+std::expected<void, MidiHandler::Error> MidiHandler::openPort()
 {
-    if (!this->midiIn_) return false;
+    if (!this->midiIn_) return std::unexpected(MidiHandler::ErrorCode::ErrorUnexpected);
 
-    uint32_t portCount = this->midiIn_->getPortCount();
 
     if (this->midiIn_->isPortOpen())
     {
         this->midiIn_->closePort();
     }
 
+    uint32_t portCount = this->midiIn_->getPortCount();
     std::cout << "available ports" << std::endl;
     for (uint32_t currentPort = 0; currentPort  < portCount; currentPort ++)
     {
         std::cout << "midi port " << currentPort  << ": " << this->midiIn_->getPortName(currentPort) << std::endl;
     }
 
-    this->midiIn_->setCallback(&MidiHandler::midiCallback, this);
-    this->midiIn_->ignoreTypes(true, true, true);
+    try
+    {
+        this->midiIn_->openPort(1);
+        this->midiIn_->setCallback(&MidiHandler::midiCallback, this);
+        this->midiIn_->ignoreTypes(true, true, true);
+    }
+    catch (const RtMidiError &error)
+    {
+        return std::unexpected(MidiHandler::ErrorCode::ErrorFailedToOpenVirtualPort);
+    }
 
-    this->midiIn_->openPort(port);
-    return true;
-}
-
-void MidiHandler::setSynth(sfizz_synth_t* synth)
-{
-    this->synth_ = synth;
+    return {};
 }
 
 MidiHandler::MidiQueue &MidiHandler::midiQueue() noexcept
@@ -73,6 +83,14 @@ QString MidiHandler::errorToQString(const Error &error) noexcept
         case MidiHandler::ErrorCode::ErrorOutOfMemory:
             baseMessage = QStringLiteral("Midi handler ran out of memory");
             break;
+
+        case MidiHandler::ErrorCode::ErrorFailedToOpenVirtualPort:
+            baseMessage = QStringLiteral("Failed to open virtual midi-in port");
+            break;
+
+        case MidiHandler::ErrorCode::ErrorUnexpected:
+            baseMessage = QStringLiteral("Unexpected Midi error");
+            break;
     }
 
     if (error.message.isEmpty()) {
@@ -82,10 +100,10 @@ QString MidiHandler::errorToQString(const Error &error) noexcept
     return baseMessage + QLatin1StringView(" (") + error.message + QLatin1StringView(")");
 }
 
-void MidiHandler::midiCallback(double /*timeStamp*/, std::vector<unsigned char> *message, void *userData)
+void MidiHandler::midiCallback(double timeStamp, std::vector<unsigned char> *message, void *userData)
 {
     MidiHandler* self = static_cast<MidiHandler*>(userData);
-    if (!self || !self->synth_ || message->empty()) return;
+    if (!self || message->empty()) return;
 
     const std::vector<unsigned char>& msg = *message;
     if (msg.size() < 3) return;
@@ -99,19 +117,24 @@ void MidiHandler::midiCallback(double /*timeStamp*/, std::vector<unsigned char> 
     event.channel = status & 0x0F;
     event.data1 = msg[1];
     event.data2 = msg[2];
-    event.sampleOffset = 0;
+    event.deltaTimeSeconds = 0;
 
-    if (command != static_cast<uint8_t>(MidiEvent::Type::NoteOn) || event.data2 != 0)
-    {
-        event.type = static_cast<MidiEvent::Type>(command);
-    }
-    else
+    if (command == static_cast<uint8_t>(MidiEvent::Type::NoteOn) && event.data2 == 0)
     {
         event.type = MidiEvent::Type::NoteOff;
         event.data2 = 64;
     }
+    else if (command == static_cast<uint8_t>(MidiEvent::Type::NoteOn))
+    {
+        event.data2 = std::max(static_cast<uint8_t>(30), event.data2);
+        event.type = static_cast<MidiEvent::Type>(command);
+    }
+    else
+    {
+        event.type = static_cast<MidiEvent::Type>(command);
+    }
 
-    self->midiQueue_.try_enqueue(event);
+    self->midiQueue_.enqueue(event);
 }
 
 // void MidiHandler::handlePitchBend(uint8_t data1, uint8_t data2)

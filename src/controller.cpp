@@ -56,7 +56,6 @@ std::expected<void, Controller::SystemError> Controller::initialize() {
     {
         return std::unexpected(std::move(res.error()));
     }
-    this->midiHandler_->setSynth(this->synth_.get());
 
     this->audioEngine_ = std::make_unique<AudioEngine>(this->synth_.get(), this->midiHandler_.get());
     if (auto res = this->audioEngine_->start(); !res)
@@ -151,7 +150,7 @@ std::expected<void, Controller::SystemError> Controller::switchMidiPort(uint32_t
         return std::unexpected(Controller::ErrorCode::ErrorUnexpected);
     }
 
-    if (!this->midiHandler_->openPort(port))
+    if (!this->midiHandler_->openPort())
     {
         return std::unexpected(Controller::Error{
             Controller::ErrorCode::ErrorOpenMidiPort,

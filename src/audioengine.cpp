@@ -118,24 +118,25 @@ int AudioEngine::process(jack_nframes_t nframes)
         MidiEvent event;
         while (this->midiHandler_->midiQueue().try_dequeue(event))
         {
+            uint8_t sampleOffset = 0;
             switch (event.type)
             {
                 case MidiEvent::Type::NoteOn:
-                    sfizz_send_note_on(this->synth_, event.sampleOffset, event.data1, event.data2);
+                    sfizz_send_note_on(this->synth_, sampleOffset, event.data1, event.data2);
                     break;
 
                 case MidiEvent::Type::NoteOff:
-                    sfizz_send_note_off(this->synth_, event.sampleOffset, event.data1, event.data2);
+                    sfizz_send_note_off(this->synth_, sampleOffset, event.data1, event.data2);
                     break;
 
                 case MidiEvent::Type::ControlChange:
-                    sfizz_send_cc(this->synth_, event.sampleOffset, event.data1, event.data2);
+                    sfizz_send_cc(this->synth_, sampleOffset, event.data1, event.data2);
                     break;
 
                 case MidiEvent::Type::PitchBend:
                 {
                     const int pitch = ((event.data2 << 7) | event.data1) - 8192;
-                    sfizz_send_pitch_wheel(this->synth_, event.sampleOffset, pitch);
+                    sfizz_send_pitch_wheel(this->synth_, sampleOffset, pitch);
                     break;
                 }
             }
