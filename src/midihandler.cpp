@@ -36,7 +36,7 @@ std::expected<void, MidiHandler::Error> MidiHandler::initialize()
     }
 }
 
-std::expected<void, MidiHandler::Error> MidiHandler::openPort()
+std::expected<void, MidiHandler::Error> MidiHandler::openPort(uint32_t port)
 {
     if (!this->midiIn_) return std::unexpected(MidiHandler::ErrorCode::ErrorUnexpected);
 
@@ -55,7 +55,14 @@ std::expected<void, MidiHandler::Error> MidiHandler::openPort()
 
     try
     {
-        this->midiIn_->openPort(1);
+        if (portCount > 0 && port < portCount)
+        {
+            this->midiIn_->openPort(port);
+        }
+        else
+        {
+            this->midiIn_->openVirtualPort("PianoCtrl MIDI Input");
+        }
         this->midiIn_->setCallback(&MidiHandler::midiCallback, this);
         this->midiIn_->ignoreTypes(true, true, true);
     }
@@ -124,11 +131,6 @@ void MidiHandler::midiCallback(double timeStamp, std::vector<unsigned char> *mes
     {
         event.type = MidiEvent::Type::NoteOff;
         event.data2 = 64;
-    }
-    else if (command == static_cast<uint8_t>(MidiEvent::Type::NoteOn))
-    {
-        event.data2 = std::max(static_cast<uint8_t>(30), event.data2);
-        event.type = static_cast<MidiEvent::Type>(command);
     }
     else
     {

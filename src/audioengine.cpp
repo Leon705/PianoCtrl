@@ -21,6 +21,7 @@ std::expected<void, AudioEngine::Error> AudioEngine::start()
 
     this->outputPortLeft_   = jack_port_register(this->client_, "output_1", JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
     this->outputPortRight_  = jack_port_register(this->client_, "output_2", JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+    this->midiInputPort_    = jack_port_register(this->client_, "midi_in", JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
 
     jack_set_process_callback(this->client_, AudioEngine::processCallback, this);
 
@@ -112,6 +113,51 @@ int AudioEngine::process(jack_nframes_t nframes)
     }
 
     this->updateVolume();
+
+    if (this->midiInputPort_)
+    {
+        void* portBuffer = jack_port_get_buffer(this->midiInputPort_, nframes);
+        if (portBuffer)
+        {
+            jack_nframes_t eventCount = jack_midi_get_event_count(portBuffer);
+            for (jack_nframes_t i = 0; i < eventCount; ++i)
+            {
+                jack_midi_event_t event;
+                if (jack_midi_event_get(&event, portBuffer, i) == 0)
+                {
+                    if (event.size < 3) continue;
+
+                    const uint8_t status = event.buffer[0];
+                    const uint8_t command = status & 0xF0;
+                    const uint8_t data1 = event.buffer[1];
+                    const uint8_t data2 = event.buffer[2];
+                    const uint32_t sampleOffset = event.time;
+
+                    if (command == static_cast<uint8_t>(MidiEvent::Type::NoteOn) && data2 == 0)
+                    {
+                        sfizz_send_note_off(this->synth_, sampleOffset, data1, 64);
+                    }
+                    else if (command == static_cast<uint8_t>(MidiEvent::Type::NoteOn))
+                    {
+                        sfizz_send_note_on(this->synth_, sampleOffset, data1, data2);
+                    }
+                    else if (command == static_cast<uint8_t>(MidiEvent::Type::NoteOff))
+                    {
+                        sfizz_send_note_off(this->synth_, sampleOffset, data1, data2);
+                    }
+                    else if (command == static_cast<uint8_t>(MidiEvent::Type::ControlChange))
+                    {
+                        sfizz_send_cc(this->synth_, sampleOffset, data1, data2);
+                    }
+                    else if (command == static_cast<uint8_t>(MidiEvent::Type::PitchBend))
+                    {
+                        const int pitch = ((data2 << 7) | data1) - 8192;
+                        sfizz_send_pitch_wheel(this->synth_, sampleOffset, pitch);
+                    }
+                }
+            }
+        }
+    }
 
     if (this->midiHandler_)
     {

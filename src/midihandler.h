@@ -28,7 +28,7 @@ public:
     ~MidiHandler();
 
     std::expected<void, MidiHandler::Error> initialize();
-    std::expected<void, MidiHandler::Error>  openPort();
+    std::expected<void, MidiHandler::Error>  openPort(uint32_t port = 0);
 
     MidiQueue& midiQueue() noexcept;
 
