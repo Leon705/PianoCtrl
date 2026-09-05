@@ -2,12 +2,13 @@
 
 #include <qdebug.h>
 
-MidiHandler::MidiHandler() : midiQueue_(1024) {}
+MidiHandler::MidiHandler() : midiQueue_(4096) {}
 
 MidiHandler::~MidiHandler()
 {
     if (this->midiIn_)
     {
+        this->midiIn_->cancelCallback();
         if (this->midiIn_->isPortOpen())
         {
             this->midiIn_->closePort();
@@ -39,7 +40,7 @@ std::expected<void, MidiHandler::Error> MidiHandler::openPort()
 {
     if (!this->midiIn_) return std::unexpected(MidiHandler::ErrorCode::ErrorUnexpected);
 
-
+    this->midiIn_->cancelCallback();
     if (this->midiIn_->isPortOpen())
     {
         this->midiIn_->closePort();

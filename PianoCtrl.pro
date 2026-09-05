@@ -6,7 +6,7 @@ QMAKE_LFLAGS += -Wl,-rpath,'$$PWD/external/sfizz/lib'
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++23
-DEFINES += __LINUX_ALSA__
+DEFINES += __LINUX_ALSA__ __UNIX_JACK__
 
 INCLUDEPATH += $$PWD/external/sfizz/include \
     $$PWD/external/rt_midi/include \
